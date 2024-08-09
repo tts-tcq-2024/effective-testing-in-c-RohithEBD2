@@ -8,7 +8,7 @@ int networkAlertStub(float celcius) {
     // Return 500 for not-ok
     // stub always succeeds and returns 200
     printf("ALERT: Temperature is %.1f celcius.\n", celcius);
-    
+
     if (celcius > 200) // Simulate a failure for high temperatures
     {
         return 500;
@@ -36,3 +36,5 @@ int main() {
     printf("All is well (maybe!)\n");
     return 0;
 }
+
+
