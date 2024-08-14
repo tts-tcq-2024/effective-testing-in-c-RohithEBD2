@@ -17,38 +17,56 @@ int printColorMap()
     return i * j;
 }
 
-void testPrintColorMap() 
-{
+void testColorPairs() {
+    // Buffer to capture the output of printColorMap
     char buffer[1024];
-    memset(buffer, 0, sizeof(buffer));
+    buffer[0] = '\0'; // Initialize the buffer with an empty string
+    
+    // Redirect stdout to the buffer
+    FILE* output = fmemopen(buffer, sizeof(buffer), "w");
+    assert(output != NULL); // Ensure the stream is opened successfully
+    
+    // Save the original stdout and redirect stdout to the memory stream
     FILE* original_stdout = stdout;
-    FILE* capture = freopen("output.txt", "w", stdout);
+    stdout = output;
     
-    int result = printColorMap();
-
-    fflush(capture);
-    freopen("/dev/tty", "a", stdout);
+    // Generate the color map output
+    printColorMap();
+    
+    // Restore stdout and close the memory stream
     stdout = original_stdout;
+    fclose(output);
     
-    FILE* file = fopen("output.txt", "r");
-    fread(buffer, sizeof(char), 1024, file);
-    fclose(file);
+    // Define expected major and minor colors
+    const char* majorColor[] = {"White", "Red", "Black", "Yellow", "Violet"};
+    const char* minorColor[] = {"Blue", "Orange", "Green", "Brown", "Slate"};
+    
+    // Split the captured output into lines and verify each one
+    char* line = strtok(buffer, "\n");
+    int lineCount = 0;
 
-    const char* expectedOutput = 
-        "0 | White | Blue\n1 | White | Orange\n2 | White | Green\n3 | White | Brown\n4 | White | Slate\n"
-        "5 | Red | Blue\n6 | Red | Orange\n7 | Red | Green\n8 | Red | Brown\n9 | Red | Slate\n"
-        "10 | Black | Blue\n11 | Black | Orange\n12 | Black | Green\n13 | Black | Brown\n14 | Black | Slate\n"
-        "15 | Yellow | Blue\n16 | Yellow | Orange\n17 | Yellow | Green\n18 | Yellow | Brown\n19 | Yellow | Slate\n"
-        "20 | Violet | Blue\n21 | Violet | Orange\n22 | Violet | Green\n23 | Violet | Brown\n24 | Violet | Slate\n";
+    while (line != NULL) {
+        char expectedOutput[100];
+        snprintf(expectedOutput, sizeof(expectedOutput), "%d | %s | %s",
+                 lineCount, majorColor[lineCount / 5], minorColor[lineCount % 5]);
 
-    assert(result == 25);
-    assert(strcmp(buffer, expectedOutput) == 0);
+        // Compare the captured line with the expected output
+        if (strcmp(line, expectedOutput) != 0) {
+            printf("Test failed at index: %d\nActual: %s\nExpected: %s\n",
+                   lineCount, line, expectedOutput);
+            assert(0 && "Mismatch in color pair output");
+        }
 
-    printf("All is well (maybe!)\n");
+        lineCount++;
+        line = strtok(NULL, "\n");
+    }
 }
 
-int main() 
-{
-    testPrintColorMap();
+int main() {
+    int result = printColorMap();
+    testColorPairs();
+    assert(result == 25);
+    printf("All is well (maybe!)\n");
     return 0;
 }
+
